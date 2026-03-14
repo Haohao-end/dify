@@ -43,3 +43,10 @@ class FileTypeNotSupportError(LLMNodeError):
 class UnsupportedPromptContentTypeError(LLMNodeError):
     def __init__(self, *, type_name: str):
         super().__init__(f"Prompt content type {type_name} is not supported.")
+
+
+class InvalidToolCallIdError(LLMNodeError):
+    """Raised when tool_results contain invalid or mismatched tool_call_ids."""
+
+    def __init__(self, message: str):
+        super().__init__(message)

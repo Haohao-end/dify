@@ -471,7 +471,9 @@ class LLMNode(Node[LLMNodeData]):
         variable_pool: VariablePool,
         external_tool_results: list | None,
     ) -> tuple[list[PromptMessage], list[str], list[dict], int]:
-        """Restore prompt_messages from saved state and inject tool results."""
+        """Restore prompt_messages from saved state and inject tool results with validation."""
+        from .exc import InvalidToolCallIdError
+
         current_round = state.get("round", 1)
         stop = state.get("stop", [])
         tool_call_history = state.get("tool_call_history", [])
@@ -486,6 +488,45 @@ class LLMNode(Node[LLMNodeData]):
                     last_assistant_tool_call_ids = {tc.id for tc in msg.tool_calls}
                     break
 
+            # Extract provided tool_call_ids from external_tool_results
+            provided_tool_call_ids: set[str] = set()
+            for result in external_tool_results:
+                tool_call_id = getattr(result, "tool_call_id", None) or (
+                    result.get("tool_call_id") if isinstance(result, dict) else None
+                )
+                if tool_call_id:
+                    provided_tool_call_ids.add(tool_call_id)
+
+            # Validate tool_call_ids
+            expected_str = ", ".join(sorted(last_assistant_tool_call_ids)) if last_assistant_tool_call_ids else "none"
+
+            # Error: no tool_call_ids provided
+            if not provided_tool_call_ids:
+                raise InvalidToolCallIdError(
+                    f"No tool_call_ids found in tool_results. "
+                    f"Expected tool_call_ids from last assistant message: {expected_str}"
+                )
+
+            unexpected_ids = provided_tool_call_ids - last_assistant_tool_call_ids
+            missing_ids = last_assistant_tool_call_ids - provided_tool_call_ids
+
+            # Error: unexpected tool_call_ids
+            if unexpected_ids:
+                unexpected_str = ", ".join(sorted(unexpected_ids))
+                raise InvalidToolCallIdError(
+                    f"Invalid tool_call_id(s) in tool_results: {unexpected_str}. "
+                    f"Expected tool_call_ids: {expected_str}"
+                )
+
+            # Warning: missing expected tool_call_ids (lenient policy)
+            if missing_ids:
+                logger.warning(
+                    "[llm_node:%s] Resume with partial tool_results. Missing tool_call_ids: %s",
+                    self._node_id,
+                    ", ".join(sorted(missing_ids)),
+                )
+
+            # Inject matched tool results
             results_for_history = []
             for result in external_tool_results:
                 tool_call_id = getattr(result, "tool_call_id", None) or (
