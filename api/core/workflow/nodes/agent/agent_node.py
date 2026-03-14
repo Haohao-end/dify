@@ -470,6 +470,25 @@ class AgentNode(Node[AgentNodeData]):
         else:
             return [tool for tool in tools if tool.get("type") != ToolProviderType.MCP]
 
+    def _extract_clarification_request(self, json_output: list[dict | list]) -> dict[str, Any] | None:
+        """
+        Extract clarification request from agent output.
+
+        Clarification request format:
+        {
+            "clarification_needed": true,
+            "clarification_prompt": "Please clarify...",
+            "context": {...}  # optional
+        }
+
+        This is a helper method for future HITL support. Currently, it only detects
+        the clarification request structure but does not trigger any pause event.
+        """
+        for item in json_output:
+            if isinstance(item, dict) and item.get("clarification_needed") is True:
+                return item
+        return None
+
     def _transform_message(
         self,
         messages: Generator[ToolInvokeMessage, None, None],

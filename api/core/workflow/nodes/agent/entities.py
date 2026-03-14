@@ -17,6 +17,7 @@ class AgentNodeData(BaseNodeData):
     # If this value is None, it indicates this is a previous version
     # and requires using the legacy parameter parsing rules.
     tool_node_version: str | None = None
+    enable_human_clarification: bool = False
 
     class AgentInput(BaseModel):
         value: Union[list[str], list[ToolSelector], Any]

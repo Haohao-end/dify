@@ -15,6 +15,7 @@ const nodeDefault: NodeDefault<AgentNodeType> = {
   metaData,
   defaultValue: {
     tool_node_version: '2',
+    enable_human_clarification: false,
   },
   checkValid(payload, t, moreDataForCheckValid: {
     strategyProvider?: StrategyPluginDetail

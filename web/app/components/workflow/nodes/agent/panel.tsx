@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { toType } from '@/app/components/tools/utils/to-form-schema'
 import { isSupportMCP } from '@/utils/plugin-version-feature'
 import { useStore } from '../../store'
+import Switch from '@/app/components/base/switch'
 import { AgentStrategy } from '../_base/components/agent-strategy'
 import Field from '../_base/components/field'
 import { MCPToolAvailabilityProvider } from '../_base/components/mcp-tool-availability'
@@ -101,6 +102,26 @@ const AgentPanel: FC<NodePanelProps<AgentNodeType>> = (props) => {
             />
           </>
         )}
+        <Split />
+        <div className="mt-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-medium text-gray-900">{t('nodes.agent.enableHumanClarification.label', { ns: 'workflow' })}</div>
+              <div className="text-xs text-gray-500 mt-1">{t('nodes.agent.enableHumanClarification.tooltip', { ns: 'workflow' })}</div>
+            </div>
+            <Switch
+              defaultValue={inputs.enable_human_clarification || false}
+              onChange={(value) => {
+                setInputs({
+                  ...inputs,
+                  enable_human_clarification: value,
+                })
+              }}
+              disabled={readOnly}
+              size="md"
+            />
+          </div>
+        </div>
       </div>
       <div>
         <OutputVars>
